@@ -1,0 +1,4 @@
+export const REPOSITORIES = {
+    FILE: 'FILE_REPOSITORY',
+    DATA_SOURCE: 'DATA_SOURCE',
+}
