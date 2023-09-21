@@ -3,6 +3,7 @@ import { FilesService } from './files.service';
 import { UpdateFileDto } from './dto/update-file.dto';
 import { createHash } from 'crypto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { generateFileHash } from '../../utils/generateFileHash';
 
 /**
  * Controlador para gerenciar operações HTTP relacionadas a arquivos.
@@ -26,9 +27,12 @@ export class FilesController {
     @Body() body: { isMalicious: 'on' },
     @UploadedFile() file: Express.Multer.File
   ) {
-    const existingFileHash = createHash('md5').update(file.buffer).digest('hex');
+    const hash = generateFileHash(file.buffer, {
+      algorithm: 'md5',
+      encoding: 'base64'
+    });
 
-    const existingFile = await this.filesService.findByHash(existingFileHash);
+    const existingFile = await this.filesService.findByHash(hash);
 
     if (existingFile) throw new ForbiddenException({ statusCode: 403, message: "Arquivo malicioso." });
 
@@ -42,7 +46,6 @@ export class FilesController {
       throw new ForbiddenException({ statusCode: 403, message: "Arquivo malicioso." });
     }
 
-    const hash = createHash('md5').update(file.buffer).digest('hex');
     const createFile = await this.filesService.create({
       buffer: file.buffer,
       mime_type: file.mimetype
