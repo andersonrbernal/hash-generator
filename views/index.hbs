@@ -6,14 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <link rel="stylesheet" href="/index.css">
-    <style>
-        .form {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            max-width: 300px;
-        }
-    </style>
 </head>
 <body>
     <form action={{ formAction }} method={{ formMethod }} class="form" enctype="multipart/form-data">
@@ -29,24 +21,6 @@
         </label>
         <button type="submit">Enviar</button>
     </form>
-    <script>
-        const submitButton = document.querySelector('button[type="submit"]');
-        const fileInput = document.querySelector('input[name="file"]')
-        const isMaliciousInput = document.querySelector('input[name="isMalicious"]')
-
-        submitButton.addEventListener('click', async (event) => {
-            event.preventDefault();
-
-            const response = await fetch('http://localhost:3000/files', {
-                body: {
-                    isMalicious: isMaliciousInput.value ?? undefined,
-                    file: fileInput.value
-                },
-                method: 'post'
-            })
-
-            alert(response.body.message);
-        })
-    </script>
+    <script src="/index.js"></script>
 </body>
 </html>
