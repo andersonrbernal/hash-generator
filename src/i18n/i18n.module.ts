@@ -18,4 +18,3 @@ import { I18N } from "../config/constants";
     })]
 })
 export class I18nModule { }
-console.log(I18N)
