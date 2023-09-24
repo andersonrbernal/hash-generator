@@ -1,0 +1,8 @@
+{
+    "create": {
+        "messages": {
+            "existingFile": "File already exists in database.",
+            "maliciousFile": "Malicious file detected."
+        }
+    }
+}
