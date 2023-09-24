@@ -4,6 +4,7 @@ import { UpdateFileDto } from './dto/update-file.dto';
 import { createHash } from 'crypto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { generateFileHash } from '../../utils/generateFileHash';
+import { I18nService } from 'nestjs-i18n';
 
 /**
  * Controlador para gerenciar operações HTTP relacionadas a arquivos.
@@ -14,7 +15,10 @@ export class FilesController {
    * Construtor do `FilesController`.
    * @param filesService - O serviço que gerencia operações relacionadas a arquivos.
    */
-  constructor(private readonly filesService: FilesService) { }
+  constructor(
+    private readonly filesService: FilesService,
+    private readonly i18nService: I18nService,
+  ) { }
 
   /**
    * Rota HTTP POST para criar um novo arquivo.
@@ -24,7 +28,7 @@ export class FilesController {
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   async create(
-    @Body() body: { isMalicious: 'on' },
+    @Body() body: { isMalicious?: 'on' },
     @UploadedFile() file: Express.Multer.File
   ) {
     const hash = generateFileHash(file.buffer, {
@@ -34,16 +38,22 @@ export class FilesController {
 
     const existingFile = await this.filesService.findByHash(hash);
 
-    if (existingFile) throw new ForbiddenException({ statusCode: 403, message: "Arquivo malicioso." });
+    if (existingFile) throw new ForbiddenException({
+      statusCode: 403,
+      message: this.i18nService.t('files.create.messages.existingFile')
+    });
 
     if (body.isMalicious === 'on') {
       const createMaliciousFile = await this.filesService.create({
         buffer: file.buffer,
         mime_type: file.mimetype
       });
-
+      createMaliciousFile.hash = hash;
       await this.filesService.save(createMaliciousFile);
-      throw new ForbiddenException({ statusCode: 403, message: "Arquivo malicioso." });
+      throw new ForbiddenException({
+        statusCode: 403,
+        message: this.i18nService.t('files.create.messages.maliciousFile')
+      });
     }
 
     const createFile = await this.filesService.create({
