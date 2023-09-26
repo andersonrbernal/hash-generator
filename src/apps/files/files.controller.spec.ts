@@ -7,23 +7,31 @@ import { File } from './entities/file.entity';
 import { fileMock } from './mocks/fileMock';
 import { fileProvider } from './mocks/fileProvider';
 import { faker } from '@faker-js/faker';
-import { createHash } from 'crypto';
 import { Readable } from 'stream';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, Provider } from '@nestjs/common';
 import { generateFileHash } from '../../utils/generateFileHash';
+import { mockDeep } from 'jest-mock-extended';
+import { I18nService } from 'nestjs-i18n';
+
+const i18nServiceMock: Provider = {
+    provide: I18nService,
+    useValue: mockDeep<I18nService>()
+};
 
 describe('FilesController', () => {
     let controller: FilesController;
     let service: FilesService;
+    let i18nService: I18nService;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             controllers: [FilesController],
-            providers: [FilesService, fileProvider],
+            providers: [FilesService, fileProvider, i18nServiceMock],
         }).compile();
 
         controller = module.get<FilesController>(FilesController);
         service = module.get<FilesService>(FilesService);
+        i18nService = module.get<I18nService>(I18nService);
     });
 
     it('should be defined', () => {
@@ -64,23 +72,17 @@ describe('FilesController', () => {
 
             jest.spyOn(service, 'findByHash').mockResolvedValueOnce(existingFile);
 
-            try {
-                await controller.create({ isMalicious: undefined }, multerFileMock);
-            } catch (error) {
-                expect(error).toBeInstanceOf(ForbiddenException);
-                expect(error.message).toBe('Arquivo malicioso.');
-            }
+            await expect(controller.create({}, multerFileMock))
+                .rejects
+                .toThrowError(new ForbiddenException({ statusCode: 403, message: "Forbidden Exception" }))
         });
 
         it('should not create a malicious file', async () => {
             jest.spyOn(service, 'create').mockResolvedValueOnce(fileMock);
 
-            try {
-                await controller.create({ isMalicious: 'on' }, multerFileMock);
-            } catch (error) {
-                expect(error).toBeInstanceOf(ForbiddenException);
-                expect(error.message).toBe('Arquivo malicioso.');
-            }
+            await expect(controller.create({ isMalicious: 'on' }, multerFileMock))
+                .rejects
+                .toThrowError(new ForbiddenException({ statusCode: 403, message: "Forbidden Exception" }))
         });
     });
 
